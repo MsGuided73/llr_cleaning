@@ -4,8 +4,10 @@ import { MobileNav } from '@/components/layout/MobileNav'
 import { VoiceButton } from '@/components/layout/VoiceButton'
 import { ChevronLeft, Receipt, Tag, DollarSign, Camera, Save, MapPin, Sparkles, HelpCircle, X, Check, Loader2, Edit2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
 const categories = [
     { id: 'supplies', label: 'Supplies', icon: Tag, color: 'text-amber-400' },
@@ -15,11 +17,13 @@ const categories = [
 ]
 
 export default function LogExpense() {
+    const router = useRouter()
     const [amount, setAmount] = useState('')
+    const [category, setCategory] = useState('')
+    const [loading, setLoading] = useState(false)
     const [isScanning, setIsScanning] = useState(false)
     const [uploadedImage, setUploadedImage] = useState<string | null>(null)
     const [parsedItems, setParsedItems] = useState<{ id: number, name: string, price: number }[]>([])
-    const [editingId, setEditingId] = useState<number | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +50,7 @@ export default function LogExpense() {
             setParsedItems(mockItems)
             recalculateTotal(mockItems)
             setIsScanning(false)
+            setCategory('supplies') // Auto-categorize trigger
         }, 2500)
     }
 
@@ -68,10 +73,34 @@ export default function LogExpense() {
         if (field === 'price') recalculateTotal(newItems)
     }
 
+    const handleSave = async () => {
+        if (!amount || !category) return
+        setLoading(true)
+
+        const { error } = await supabase.from('llr_expenses').insert([{
+            total_amount: parseFloat(amount),
+            category,
+            merchant: 'Scanned Receipt', // Could be parsed AI field later
+            date: new Date().toISOString(),
+            items: parsedItems
+        }])
+
+        setLoading(false)
+
+        if (!error) {
+            alert('Expense saved successfully!')
+            router.push('/finances')
+        } else {
+            console.error(error)
+            alert('Error saving expense.')
+        }
+    }
+
     const clearScan = () => {
         setUploadedImage(null)
         setParsedItems([])
         setAmount('')
+        setCategory('')
         setIsScanning(false)
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
@@ -80,7 +109,7 @@ export default function LogExpense() {
         <main className="main-content">
             <header className="flex items-center gap-4 mb-8">
                 <Link href="/finances">
-                    <motion.div whileTap={{ scale: 0.8 }} className="glass-orb">
+                    <motion.div whileTap={{ scale: 0.8 }} className="glass-icon-sq">
                         <ChevronLeft size={24} />
                     </motion.div>
                 </Link>
@@ -213,8 +242,10 @@ export default function LogExpense() {
                         {categories.map((cat) => (
                             <motion.button
                                 key={cat.id}
+                                onClick={() => setCategory(cat.id)}
                                 whileTap={{ scale: 0.95 }}
-                                className={`glass-pane p-6 flex flex-col items-center gap-4 transition-all ${(!amount || isScanning) ? 'opacity-50 grayscale' : 'hover:scale-[1.02]'}`}
+                                className={`glass-pane p-6 flex flex-col items-center gap-4 transition-all ${(!amount || isScanning) ? 'opacity-50 grayscale' : 'hover:scale-[1.02]'
+                                    } ${category === cat.id ? 'ring-2 ring-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]' : ''}`}
                             >
                                 <div className={`p-4 bg-[hsl(var(--background))] rounded-2xl ${cat.color} border border-white/5`}>
                                     <cat.icon size={26} />
@@ -226,11 +257,12 @@ export default function LogExpense() {
                 </div>
 
                 <motion.button
+                    onClick={handleSave}
                     whileTap={{ scale: 0.95 }}
-                    disabled={!amount || isScanning}
-                    className={`premium-button-3d w-full h-18 text-sm ${(!amount || isScanning) ? 'opacity-50 grayscale' : ''}`}
+                    disabled={!amount || isScanning || loading || !category}
+                    className={`premium-button-3d w-full h-18 text-sm ${(!amount || isScanning || loading || !category) ? 'opacity-50 grayscale' : ''}`}
                 >
-                    <Save size={22} className="mr-2" /> Save to LLR Records
+                    {loading ? <Loader2 className="animate-spin" /> : <><Save size={22} className="mr-2" /> Save to LLR Records</>}
                 </motion.button>
             </section>
 
