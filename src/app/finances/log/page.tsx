@@ -42,16 +42,14 @@ export default function LogExpense() {
         setIsScanning(true)
         // Simulate AI parsing time
         setTimeout(() => {
-            const mockItems = [
-                { id: 1, name: "Windex Original (26oz)", price: 4.29 },
-                { id: 2, name: "Microfiber Towels (12pk)", price: 12.99 },
-                { id: 3, name: "Murphy Oil Soap", price: 6.50 },
+            const initialItem = [
+                { id: 1, name: "Enter Item Name", price: 0.00 },
             ]
-            setParsedItems(mockItems)
-            recalculateTotal(mockItems)
+            setParsedItems(initialItem)
+            recalculateTotal(initialItem)
             setIsScanning(false)
             setCategory('supplies') // Auto-categorize trigger
-        }, 2500)
+        }, 1500)
     }
 
     const recalculateTotal = (items: typeof parsedItems) => {

@@ -2,9 +2,12 @@
 
 import { MobileNav } from '@/components/layout/MobileNav'
 import { VoiceButton } from '@/components/layout/VoiceButton'
-import { Plus, TrendingUp, Wallet, MapPin, ChevronRight, Clock, Star, Sparkles, Shield, DollarSign, ArrowUpRight } from 'lucide-react'
+import { Plus, TrendingUp, Wallet, MapPin, ChevronRight, Clock, Star, Sparkles, Shield, DollarSign, ArrowUpRight, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { format } from 'date-fns'
 
 const container = {
   hidden: { opacity: 0 },
@@ -20,6 +23,65 @@ const item = {
 }
 
 export default function Home() {
+  const [loading, setLoading] = useState(true)
+  const [nextJob, setNextJob] = useState<any>(null)
+  const [paymentAlert, setPaymentAlert] = useState<any>(null)
+  const [stats, setStats] = useState({ revenue: 0, miles: 0 })
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const today = new Date().toISOString()
+
+        // 1. Next Job
+        const { data: upcoming } = await supabase
+          .from('llr_appointments')
+          .select('*, client:llr_clients(name, address)')
+          .gte('start_time', today)
+          .order('start_time', { ascending: true })
+          .limit(1)
+          .single()
+
+        if (upcoming) setNextJob(upcoming)
+
+        // 2. Payment Alert (Unpaid completed jobs)
+        const { data: unpaid } = await supabase
+          .from('llr_appointments')
+          .select('*, client:llr_clients(name)')
+          .eq('status', 'completed')
+          .eq('payment_status', 'pending')
+          .limit(1)
+          .single()
+
+        if (unpaid) setPaymentAlert(unpaid)
+
+        // 3. Stats (Revenue & Mileage)
+        // Note: In a real app, you'd aggregate on the DB side or use edge functions
+        const { data: revenueData } = await supabase
+          .from('llr_appointments')
+          .select('price')
+          .eq('status', 'completed')
+
+        const totalRevenue = revenueData?.reduce((acc, curr) => acc + (curr.price || 0), 0) || 0
+
+        const { data: mileageData } = await supabase
+          .from('llr_mileage_logs')
+          .select('miles')
+
+        const totalMiles = mileageData?.reduce((acc, curr) => acc + (curr.miles || 0), 0) || 0
+
+        setStats({ revenue: totalRevenue, miles: totalMiles })
+
+      } catch (error) {
+        console.error('Error loading dashboard:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
+
   return (
     <main className="main-content">
       <motion.div
@@ -47,102 +109,123 @@ export default function Home() {
           </div>
         </motion.header>
 
-        {/* Priority Alert - Tiered Glass Hierarchy */}
-        <motion.section variants={item}>
-          <div className="glass-pane bg-rose-50/40 dark:bg-rose-950/20 border-rose-100/30">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="glass-icon-sq bg-rose-100 text-rose-600 border-rose-200">
-                  <Shield size={20} />
+        {loading ? (
+          <div className="flex justify-center p-12">
+            <Loader2 className="animate-spin text-[hsl(var(--muted-foreground))]" size={32} />
+          </div>
+        ) : (
+          <>
+            {/* Priority Alert - Tiered Glass Hierarchy */}
+            {paymentAlert && (
+              <motion.section variants={item}>
+                <div className="glass-pane bg-rose-50/40 dark:bg-rose-950/20 border-rose-100/30">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="glass-icon-sq bg-rose-100 text-rose-600 border-rose-200">
+                        <Shield size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm">Payment Alert</h3>
+                        <p className="text-[10px] font-bold text-rose-500/80 uppercase tracking-widest">Action Needed</p>
+                      </div>
+                    </div>
+                    <div className="glass-icon-sq w-10 h-10 bg-white text-black shadow-lg">
+                      <ArrowUpRight size={18} />
+                    </div>
+                  </div>
+
+                  <div className="glass-inner p-6 mb-6 sage-teal-glow">
+                    <h4 className="font-black text-xl leading-tight">{paymentAlert.client?.name}</h4>
+                    <p className="text-xs text-[hsl(var(--primary))] font-bold mt-1">${paymentAlert.price?.toFixed(2)} Outstanding</p>
+                  </div>
+
+                  <Link href="/finances/remind">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      className="premium-button-3d w-full h-16 text-xs"
+                    >
+                      Send Reminder
+                    </motion.button>
+                  </Link>
+                </div>
+              </motion.section>
+            )}
+
+            {/* Primary Focus Card - Tiered Glass Hierarchy */}
+            <motion.section variants={item}>
+              <div className="glass-pane">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="glass-icon-sq">
+                      <Clock size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm">Next Cleaning</h3>
+                      <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-widest">
+                        {nextJob
+                          ? format(new Date(nextJob.start_time), 'h:mm a Today') // Simplified label for now
+                          : 'No upcoming jobs'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="glass-icon-sq w-10 h-10 bg-white text-black shadow-lg">
+                    <ArrowUpRight size={18} />
+                  </div>
+                </div>
+
+                {nextJob ? (
+                  <>
+                    <div className="glass-inner p-6 mb-6 flex items-end justify-between min-h-[140px] sage-teal-glow">
+                      <div className="space-y-1">
+                        <h3 className="text-2xl font-black tracking-tight">{nextJob.client?.name}</h3>
+                        <div className="flex items-center gap-2 text-xs font-medium opacity-60">
+                          <MapPin size={14} /> {nextJob.client?.address}
+                        </div>
+                      </div>
+                      <div className="w-14 h-14 rounded-2xl border-4 border-white shadow-2xl overflow-hidden flex-shrink-0">
+                        <img src="https://images.unsplash.com/photo-1541339907198-e08756ebafe1?w=100&h=100&fit=crop" alt="Property" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <Link href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextJob.client?.address || '')}`} target="_blank">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        className="premium-button-3d w-full h-18 text-xs bg-[hsl(var(--primary))]"
+                      >
+                        Start Heading There
+                      </motion.button>
+                    </Link>
+                  </>
+                ) : (
+                  <div className="glass-inner p-6 mb-6 flex items-center justify-center min-h-[140px]">
+                    <p className="text-sm opacity-50">You're all caught up!</p>
+                  </div>
+                )}
+              </div>
+            </motion.section>
+
+            {/* Stats Grid */}
+            <motion.section variants={item} className="grid grid-cols-2 gap-4 pb-12">
+              <div className="glass-pane p-6 flex flex-col items-center gap-4 text-center">
+                <div className="glass-icon-sq bg-[hsl(var(--background))] text-[hsl(var(--primary))]">
+                  <Wallet size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Payment Alert</h3>
-                  <p className="text-[10px] font-bold text-rose-500/80 uppercase tracking-widest">Action Needed</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted-foreground))]">Revenue</p>
+                  <p className="text-xl font-black">${stats.revenue.toFixed(2)}</p>
                 </div>
               </div>
-              <div className="glass-icon-sq w-10 h-10 bg-white text-black shadow-lg">
-                <ArrowUpRight size={18} />
-              </div>
-            </div>
-
-            <div className="glass-inner p-6 mb-6 sage-teal-glow">
-              <h4 className="font-black text-xl leading-tight">Mrs. Davis (Yesterday)</h4>
-              <p className="text-xs text-[hsl(var(--primary))] font-bold mt-1">$180.00 Outstanding</p>
-            </div>
-
-            <Link href="/finances/remind">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="premium-button-3d w-full h-16 text-xs"
-              >
-                Send Reminder
-              </motion.button>
-            </Link>
-          </div>
-        </motion.section>
-
-        {/* Primary Focus Card - Tiered Glass Hierarchy */}
-        <motion.section variants={item}>
-          <div className="glass-pane">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="glass-icon-sq">
-                  <Clock size={20} />
+              <div className="glass-pane p-6 flex flex-col items-center gap-4 text-center">
+                <div className="glass-icon-sq bg-[hsl(var(--background))] text-[hsl(var(--primary))]">
+                  <TrendingUp size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Next Cleaning</h3>
-                  <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-widest">9:30 AM Today</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted-foreground))]">Mileage</p>
+                  <p className="text-xl font-black">{stats.miles.toFixed(1)} mi</p>
                 </div>
               </div>
-              <div className="glass-icon-sq w-10 h-10 bg-white text-black shadow-lg">
-                <ArrowUpRight size={18} />
-              </div>
-            </div>
-
-            <div className="glass-inner p-6 mb-6 flex items-end justify-between min-h-[140px] sage-teal-glow">
-              <div className="space-y-1">
-                <h3 className="text-2xl font-black tracking-tight">Mrs. Johnson</h3>
-                <div className="flex items-center gap-2 text-xs font-medium opacity-60">
-                  <MapPin size={14} /> Highland Park, 123 Maple
-                </div>
-              </div>
-              <div className="w-14 h-14 rounded-2xl border-4 border-white shadow-2xl overflow-hidden flex-shrink-0">
-                <img src="https://images.unsplash.com/photo-1541339907198-e08756ebafe1?w=100&h=100&fit=crop" alt="Property" className="w-full h-full object-cover" />
-              </div>
-            </div>
-
-            <Link href="https://www.google.com/maps/dir/?api=1&destination=123+Maple,+Highland+Park" target="_blank">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="premium-button-3d w-full h-18 text-xs bg-[hsl(var(--primary))]"
-              >
-                Start Heading There
-              </motion.button>
-            </Link>
-          </div>
-        </motion.section>
-
-        {/* Stats Grid */}
-        <motion.section variants={item} className="grid grid-cols-2 gap-4 pb-12">
-          <div className="glass-pane p-6 flex flex-col items-center gap-4 text-center">
-            <div className="glass-icon-sq bg-[hsl(var(--background))] text-[hsl(var(--primary))]">
-              <Wallet size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted-foreground))]">Revenue</p>
-              <p className="text-xl font-black">$450.00</p>
-            </div>
-          </div>
-          <div className="glass-pane p-6 flex flex-col items-center gap-4 text-center">
-            <div className="glass-icon-sq bg-[hsl(var(--background))] text-[hsl(var(--primary))]">
-              <TrendingUp size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted-foreground))]">Mileage</p>
-              <p className="text-xl font-black">12.4 mi</p>
-            </div>
-          </div>
-        </motion.section>
+            </motion.section>
+          </>
+        )}
 
         {/* Global Action Add */}
         <motion.div variants={item} className="fixed bottom-32 right-6 z-50">
