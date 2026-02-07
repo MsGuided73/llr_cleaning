@@ -2,7 +2,7 @@
 
 import { MobileNav } from '@/components/layout/MobileNav'
 import { VoiceButton } from '@/components/layout/VoiceButton'
-import { Plus, TrendingUp, Wallet, MapPin, ChevronRight, Clock, Star, Sparkles, Shield, DollarSign, ArrowUpRight, Loader2 } from 'lucide-react'
+import { Plus, TrendingUp, MapPin, Clock, Sparkles, Loader2, Phone } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -26,7 +26,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [nextJob, setNextJob] = useState<any>(null)
   const [paymentAlert, setPaymentAlert] = useState<any>(null)
-  const [stats, setStats] = useState({ revenue: 0, miles: 0 })
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -36,7 +35,7 @@ export default function Home() {
         // 1. Next Job
         const { data: upcoming } = await supabase
           .from('llr_appointments')
-          .select('*, client:llr_clients(name, address)')
+          .select('*, client:llr_clients(name, address, phone)')
           .gte('start_time', today)
           .order('start_time', { ascending: true })
           .limit(1)
@@ -54,23 +53,6 @@ export default function Home() {
           .single()
 
         if (unpaid) setPaymentAlert(unpaid)
-
-        // 3. Stats (Revenue & Mileage)
-        // Note: In a real app, you'd aggregate on the DB side or use edge functions
-        const { data: revenueData } = await supabase
-          .from('llr_appointments')
-          .select('price')
-          .eq('status', 'completed')
-
-        const totalRevenue = revenueData?.reduce((acc, curr) => acc + (curr.price || 0), 0) || 0
-
-        const { data: mileageData } = await supabase
-          .from('llr_mileage_logs')
-          .select('miles')
-
-        const totalMiles = mileageData?.reduce((acc, curr) => acc + (curr.miles || 0), 0) || 0
-
-        setStats({ revenue: totalRevenue, miles: totalMiles })
 
       } catch (error) {
         console.error('Error loading dashboard:', error)
@@ -115,115 +97,131 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* Priority Alert - Tiered Glass Hierarchy */}
-            {paymentAlert && (
-              <motion.section variants={item}>
-                <div className="glass-pane bg-rose-50/40 dark:bg-rose-950/20 border-rose-100/30">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="glass-icon-sq bg-rose-100 text-rose-600 border-rose-200">
-                        <Shield size={20} />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-sm">Payment Alert</h3>
-                        <p className="text-[10px] font-bold text-rose-500/80 uppercase tracking-widest">Action Needed</p>
-                      </div>
+            <motion.div variants={item} className="flex items-center justify-between mb-2 px-1">
+                <h2 className="text-3xl font-medium tracking-tight">My Work</h2>
+                <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full border border-black/5 flex items-center justify-center">
+                        <TrendingUp size={20} className="opacity-50" />
                     </div>
-                    <div className="glass-icon-sq w-10 h-10 bg-white text-black shadow-lg">
-                      <ArrowUpRight size={18} />
+                     <div className="w-10 h-10 rounded-full border border-black/5 flex items-center justify-center">
+                        <Clock size={20} className="opacity-50" />
                     </div>
-                  </div>
-
-                  <div className="glass-inner p-6 mb-6 sage-teal-glow">
-                    <h4 className="font-black text-xl leading-tight">{paymentAlert.client?.name}</h4>
-                    <p className="text-xs text-[hsl(var(--primary))] font-bold mt-1">${paymentAlert.price?.toFixed(2)} Outstanding</p>
-                  </div>
-
-                  <Link href="/finances/remind">
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      className="premium-button-3d w-full h-16 text-xs"
-                    >
-                      Send Reminder
-                    </motion.button>
-                  </Link>
                 </div>
-              </motion.section>
+            </motion.div>
+
+            {/* Daily Timeline - To evoke the list feel */}
+            <div className="flex justify-between px-2 mb-6">
+                 <span className="text-sm font-bold opacity-40">Today</span>
+            </div>
+
+            {/* Primary Active Card (Next Job) */}
+            <motion.section variants={item}>
+              {nextJob ? (
+                 <div className="airy-card active min-h-[180px] flex flex-col justify-between">
+                    {/* Top Row: Badges */}
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="pill-badge">
+                            Next Job
+                        </div>
+                        <div className="pill-badge bg-white/90 text-black">
+                            {format(new Date(nextJob.start_time), 'h:mm a')}
+                        </div>
+                    </div>
+
+                    {/* Middle Row: Content */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-16 h-16 rounded-full bg-black/10 overflow-hidden flex-shrink-0 border-2 border-white/20">
+                             <img 
+                                src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" 
+                                alt="Client"
+                                className="w-full h-full object-cover"
+                             />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-bold leading-tight mb-1">{nextJob.client?.name}</h3>
+                            <p className="opacity-70 font-medium text-sm">Standard Cleaning</p>
+                        </div>
+                    </div>
+
+                    {/* Bottom Row: Actions */}
+                    <div className="flex items-center justify-between">
+                         <div className="status-chip dark">
+                            90
+                         </div>
+                         
+                         <div className="flex gap-2">
+                            <Link href={`tel:${nextJob.client?.phone || ''}`}>
+                                <button className="action-circle light">
+                                    <Phone size={20} />
+                                </button>
+                            </Link>
+                             <Link href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextJob.client?.address || '')}`} target="_blank">
+                                <button className="action-circle dark">
+                                    <MapPin size={20} />
+                                </button>
+                            </Link>
+                         </div>
+                    </div>
+                 </div>
+              ) : (
+                <div className="airy-card min-h-[140px] flex flex-col items-center justify-center text-center opacity-70">
+                    <Sparkles size={32} className="mb-2 opacity-50"/>
+                    <h3 className="font-bold">All caught up!</h3>
+                    <p className="text-sm">Enjoy your day off.</p>
+                </div>
+              )}
+            </motion.section>
+
+            {/* Secondary List Items (Payment Alert) */}
+            {paymentAlert && (
+                <motion.section variants={item}>
+                    <div className="airy-card flex flex-col gap-4">
+                         <div className="flex justify-between items-start">
+                            <div className="pill-badge bg-rose-100 text-rose-600">
+                                Payment Due
+                            </div>
+                            <span className="text-xs font-bold opacity-40">Overdue</span>
+                        </div>
+
+                         <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-rose-50 overflow-hidden flex-shrink-0 flex items-center justify-center text-rose-500 font-bold text-lg">
+                                 {paymentAlert.client?.name?.[0] || '!'}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold leading-tight">{paymentAlert.client?.name}</h3>
+                                <p className="opacity-50 text-sm font-medium">Pending Invoice</p>
+                            </div>
+                            <div className="status-chip lime text-black">
+                                $
+                            </div>
+                        </div>
+                        
+                         <Link href="/finances/remind" className="w-full">
+                            <button className="w-full py-3 rounded-xl bg-black text-white font-bold text-sm">
+                                Review Invoice
+                            </button>
+                        </Link>
+                    </div>
+                </motion.section>
             )}
 
-            {/* Primary Focus Card - Tiered Glass Hierarchy */}
-            <motion.section variants={item}>
-              <div className="glass-pane">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="glass-icon-sq">
-                      <Clock size={20} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm">Next Cleaning</h3>
-                      <p className="text-[10px] font-bold text-[hsl(var(--primary))] uppercase tracking-widest">
-                        {nextJob
-                          ? format(new Date(nextJob.start_time), 'h:mm a Today') // Simplified label for now
-                          : 'No upcoming jobs'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="glass-icon-sq w-10 h-10 bg-white text-black shadow-lg">
-                    <ArrowUpRight size={18} />
-                  </div>
-                </div>
-
-                {nextJob ? (
-                  <>
-                    <div className="glass-inner p-6 mb-6 flex items-end justify-between min-h-[140px] sage-teal-glow">
-                      <div className="space-y-1">
-                        <h3 className="text-2xl font-black tracking-tight">{nextJob.client?.name}</h3>
-                        <div className="flex items-center gap-2 text-xs font-medium opacity-60">
-                          <MapPin size={14} /> {nextJob.client?.address}
+            {/* Mock Future Job to show list aesthetic */}
+             <motion.section variants={item}>
+                 <div className="airy-card flex items-center justify-between opacity-60 grayscale-[0.5]">
+                      <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-gray-400">
+                                JL
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold leading-tight">Josiah Love</h3>
+                                <p className="opacity-50 text-sm font-medium">First customer call</p>
+                            </div>
                         </div>
-                      </div>
-                      <div className="w-14 h-14 rounded-2xl border-4 border-white shadow-2xl overflow-hidden flex-shrink-0">
-                        <img src="https://images.unsplash.com/photo-1541339907198-e08756ebafe1?w=100&h=100&fit=crop" alt="Property" className="w-full h-full object-cover" />
-                      </div>
-                    </div>
-                    <Link href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextJob.client?.address || '')}`} target="_blank">
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        className="premium-button-3d w-full h-18 text-xs bg-[hsl(var(--primary))]"
-                      >
-                        Start Heading There
-                      </motion.button>
-                    </Link>
-                  </>
-                ) : (
-                  <div className="glass-inner p-6 mb-6 flex items-center justify-center min-h-[140px]">
-                    <p className="text-sm opacity-50">You're all caught up!</p>
-                  </div>
-                )}
-              </div>
-            </motion.section>
-
-            {/* Stats Grid */}
-            <motion.section variants={item} className="grid grid-cols-2 gap-4 pb-12">
-              <div className="glass-pane p-6 flex flex-col items-center gap-4 text-center">
-                <div className="glass-icon-sq bg-[hsl(var(--background))] text-[hsl(var(--primary))]">
-                  <Wallet size={24} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted-foreground))]">Revenue</p>
-                  <p className="text-xl font-black">${stats.revenue.toFixed(2)}</p>
-                </div>
-              </div>
-              <div className="glass-pane p-6 flex flex-col items-center gap-4 text-center">
-                <div className="glass-icon-sq bg-[hsl(var(--background))] text-[hsl(var(--primary))]">
-                  <TrendingUp size={24} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[hsl(var(--muted-foreground))]">Mileage</p>
-                  <p className="text-xl font-black">{stats.miles.toFixed(1)} mi</p>
-                </div>
-              </div>
-            </motion.section>
+                         <div className="status-chip bg-gray-100 text-gray-500 text-xs">
+                            83
+                         </div>
+                 </div>
+             </motion.section>
           </>
         )}
 

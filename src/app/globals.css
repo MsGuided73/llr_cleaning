@@ -9,33 +9,32 @@
 }
 
 :root {
-  /* Parrot Airy - Lavender & Green (As requested in image) */
-  --background: 265 30% 96%;
-  /* Soft Lavender Background */
+  /* Clean Lime Aesthetic */
+  --background: 210 20% 98%; /* Soft cool white */
   --foreground: 0 0% 10%;
-  /* Soft Black */
   --card: 0 0% 100%;
-  /* Brilliant White */
-  --primary: 142 55% 45%;
-  /* Vibrant Parrot Green */
-  --secondary: 150 30% 94%;
-  /* Soft Green for backgrounds */
-  --muted: 265 20% 92%;
-  --muted-foreground: 260 10% 45%;
-  --border: 0 0% 0%;
-  --radius: 2.5rem;
+  --primary: 72 82% 70%; /* Vibrant Lime/Yellow */
+  --primary-foreground: 0 0% 10%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 20%;
+  --muted: 220 10% 94%;
+  --muted-foreground: 220 10% 60%;
+  --accent: 72 82% 90%; 
+  --border: 220 10% 90%;
+  --radius: 2rem;
 }
 
 .dark {
-  /* Midnight Parrot */
-  --background: 265 25% 6%;
-  --foreground: 265 10% 96%;
-  --card: 265 20% 10%;
-  --primary: 142 60% 55%;
-  --secondary: 150 20% 15%;
-  --muted: 265 15% 15%;
-  --muted-foreground: 265 10% 65%;
-  --border: 265 10% 18%;
+  --background: 240 10% 10%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 14%;
+  --primary: 72 82% 70%;
+  --primary-foreground: 0 0% 10%;
+  --secondary: 240 5% 20%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 5% 25%;
+  --muted-foreground: 240 5% 65%;
+  --border: 240 5% 20%;
 }
 
 @layer base {
@@ -71,58 +70,98 @@
 
 @layer components {
 
-  /* HIERARCHY TIER 1: The Main Glass Pane */
-  .glass-pane {
-    background: hsla(var(--card), 0.55);
-    backdrop-filter: blur(48px) saturate(180%);
-    -webkit-backdrop-filter: blur(48px) saturate(180%);
-    border: 1px solid hsla(var(--foreground), 0.05);
-    box-shadow:
-      0 40px 100px -20px rgba(0, 0, 0, 0.03),
-      inset 0 1px 1px 0 hsla(0, 0%, 100%, 0.6);
+  /* HIERARCHY TIER 1: The Main Card */
+  .airy-card {
+    background: hsl(var(--card));
     border-radius: var(--radius);
     padding: 1.5rem;
     position: relative;
     overflow: hidden;
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 
+      0 20px 40px -12px rgba(0, 0, 0, 0.05),
+      0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    border: 1px solid hsl(var(--border));
+    transition: all 0.3s ease;
   }
-
-  /* HIERARCHY TIER 2: The Nested Depth Box */
-  .glass-inner {
-    background: hsla(var(--background), 0.3);
-    backdrop-filter: blur(20px);
-    border-radius: calc(var(--radius) - 0.75rem);
-    border: 1px solid hsla(var(--foreground), 0.04);
-    box-shadow:
-      inset 0 2px 8px 0 rgba(0, 0, 0, 0.02),
-      0 1px 0 0 hsla(0, 0%, 100%, 0.4);
-  }
-
-  /* Hierarchical Color Glows */
-  .sage-teal-glow {
-    background: linear-gradient(135deg, hsla(158, 35%, 65%, 0.15), hsla(172, 45%, 40%, 0.08));
-    border: 1px solid hsla(172, 45%, 40%, 0.1);
-  }
-
-  /* HIERARCHY TIER 3: Premium 3D Buttons */
-  .premium-button-3d {
+  
+  /* The "Active" Lime Card from the image */
+  .airy-card.active {
     background: hsl(var(--primary));
-    color: white;
-    border-radius: 1.5rem;
-    position: relative;
+    color: hsl(var(--primary-foreground));
     border: none;
-    box-shadow:
-      0 8px 0 0 hsl(172 45% 30%),
-      /* The 3D side */
-      0 15px 30px -10px hsla(172, 45%, 40%, 0.4);
-    transition: all 0.1s ease;
+    box-shadow: 
+      0 25px 50px -12px hsla(var(--primary), 0.4),
+      0 4px 12px -2px hsla(var(--primary), 0.3);
+  }
+
+  /* HIERARCHY TIER 2: Inner Elements */
+  .pill-badge {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  
+  .airy-card.active .pill-badge {
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+  }
+
+  /* HIERARCHY TIER 3: Action Buttons */
+  .action-circle {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    cursor: pointer;
+  }
+  
+  .action-circle.dark {
+    background: #000;
+    color: #fff;
+  }
+  
+  .action-circle.light {
+    background: #fff;
+    color: #000;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  .action-circle:active {
+    transform: scale(0.9);
+  }
+  
+  /* Status Indicator Chips (Numbers/Scores) */
+  .status-chip {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px; /* Pill shape or circle */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+  }
+
+  .status-chip.dark {
+    background: #000;
+    color: #fff;
+  }
+  
+  .status-chip.lime {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 
   .premium-button-3d:active {
