@@ -22,6 +22,31 @@ const item = {
   show: { opacity: 1, y: 0 }
 }
 
+// MOCK DATA RESTORED FOR DEMO PURPOSES
+const mockJobs = [
+  {
+    id: 'mock-1',
+    start_time: new Date().toISOString(),
+    client: {
+      name: 'Gabriela Christy',
+      address: '123 Maple Ave',
+      phone: '555-0123'
+    },
+    status: 'scheduled'
+  }
+]
+
+const mockPayment = {
+  id: 'mock-payment-1',
+  price: 150.00,
+  client: { name: 'Halle Griffiths' }
+}
+
+const mockFuture = {
+    client: { name: 'Josiah Love' },
+    note: 'First customer call'
+}
+
 export default function Home() {
   const [loading, setLoading] = useState(true)
   const [nextJob, setNextJob] = useState<any>(null)
@@ -41,7 +66,12 @@ export default function Home() {
           .limit(1)
           .single()
 
-        if (upcoming) setNextJob(upcoming)
+        if (upcoming) {
+            setNextJob(upcoming)
+        } else {
+            // FALLBACK: Show Mock Data if DB is empty (User Request)
+            setNextJob(mockJobs[0])
+        }
 
         // 2. Payment Alert (Unpaid completed jobs)
         const { data: unpaid } = await supabase
@@ -52,7 +82,12 @@ export default function Home() {
           .limit(1)
           .single()
 
-        if (unpaid) setPaymentAlert(unpaid)
+        if (unpaid) {
+            setPaymentAlert(unpaid)
+        } else {
+             // FALLBACK: Show Mock Data if DB is empty
+             setPaymentAlert(mockPayment)
+        }
 
       } catch (error) {
         console.error('Error loading dashboard:', error)
@@ -205,16 +240,16 @@ export default function Home() {
                 </motion.section>
             )}
 
-            {/* Mock Future Job to show list aesthetic */}
+            {/* Mock Future Job (Josiah Love - Fixed as Example) */}
              <motion.section variants={item}>
                  <div className="airy-card flex items-center justify-between opacity-60 grayscale-[0.5]">
                       <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-gray-400">
-                                JL
+                                {mockFuture.client.name.split(' ').map(n => n[0]).join('')}
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold leading-tight">Josiah Love</h3>
-                                <p className="opacity-50 text-sm font-medium">First customer call</p>
+                                <h3 className="text-lg font-bold leading-tight">{mockFuture.client.name}</h3>
+                                <p className="opacity-50 text-sm font-medium">{mockFuture.note}</p>
                             </div>
                         </div>
                          <div className="status-chip bg-gray-100 text-gray-500 text-xs">

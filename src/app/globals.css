@@ -73,6 +73,7 @@
   /* HIERARCHY TIER 1: The Main Card */
   .airy-card {
     background: hsl(var(--card));
+    color: hsl(var(--foreground));
     border-radius: var(--radius);
     padding: 1.5rem;
     position: relative;
