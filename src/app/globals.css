@@ -4,221 +4,207 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
-  --color-primary: oklch(0.65 0.12 170);
+  --color-primary: var(--primary);
   --color-border: var(--border);
+  --font-sans: var(--font-oswald);
 }
 
 :root {
-  /* Clean Lime Aesthetic */
-  --background: 210 20% 98%; /* Soft cool white */
-  --foreground: 0 0% 10%;
-  --card: 0 0% 100%;
-  --primary: 72 82% 70%; /* Vibrant Lime/Yellow */
-  --primary-foreground: 0 0% 10%;
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 0 0% 20%;
-  --muted: 220 10% 94%;
-  --muted-foreground: 220 10% 60%;
-  --accent: 72 82% 90%; 
-  --border: 220 10% 90%;
-  --radius: 2rem;
+  /* Brutalist Neon Aesthetic */
+  --background: #fdfaf6; /* Speckled cream feel */
+  --foreground: #111111;
+  --card: #ffffff;
+  --primary: #2e5cff; /* Neon Blue */
+  --primary-foreground: #ffffff;
+  --secondary: #e6e6e6;
+  --secondary-foreground: #111111;
+  --muted: #f4f4f4;
+  --muted-foreground: #555555;
+  --accent: #ff007f; /* Neon Pink */
+  --accent-yellow: #f4ff00; /* Neon Yellow */
+  --border: #111111; /* Brutalist thick black */
+  --radius: 0px; /* Brutalist sharp corners */
 }
 
-.dark {
-  --background: 240 10% 10%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 14%;
-  --primary: 72 82% 70%;
-  --primary-foreground: 0 0% 10%;
-  --secondary: 240 5% 20%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 5% 25%;
-  --muted-foreground: 240 5% 65%;
-  --border: 240 5% 20%;
-}
-
+/* Base resets & typography */
 @layer base {
-
-  /* Font Scaling System */
-  html.font-standard {
-    font-size: 16px;
-  }
-
-  html.font-large {
-    font-size: 18px;
-  }
-
-  html.font-xlarge {
-    font-size: 20px;
-  }
-
   * {
-    border-color: hsl(var(--border) / 0.04);
+    border-color: var(--border);
     -webkit-tap-highlight-color: transparent;
   }
 
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Outfit', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    overflow-x: hidden;
+    background-color: var(--background);
+    color: var(--foreground);
+    /* Subtle speckled pattern */
+    background-image: 
+      radial-gradient(#111 0.5px, transparent 0.5px),
+      radial-gradient(#111 0.5px, transparent 0.5px);
+    background-size: 80px 80px;
+    background-position: 0 0, 40px 40px;
     background-attachment: fixed;
+    opacity: 0.95; /* just the background styling effect, we use a pseudo element below instead for better control */
+    font-family: var(--font-oswald), sans-serif;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: 0.02em;
+    overflow-x: hidden;
+  }
+  
+  body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: radial-gradient(#666 0.5px, transparent 0.5px);
+      background-size: 32px 32px;
+      z-index: -1;
+      opacity: 0.2;
   }
 }
 
 @layer components {
 
   /* HIERARCHY TIER 1: The Main Card */
-  .airy-card {
-    background: hsl(var(--card));
-    color: hsl(var(--foreground));
-    border-radius: var(--radius);
-    padding: 1.5rem;
+  .brutal-card {
+    background: var(--card);
+    color: var(--foreground);
+    border: 3px solid var(--border);
     position: relative;
-    overflow: hidden;
-    box-shadow: 
-      0 20px 40px -12px rgba(0, 0, 0, 0.05),
-      0 2px 4px -1px rgba(0, 0, 0, 0.02);
-    border: 1px solid hsl(var(--border));
-    transition: all 0.3s ease;
+    box-shadow: 6px 6px 0px 0px var(--border);
+    transition: all 0.2s ease;
+  }
+
+  .brutal-card-dashed {
+    border: 2px dashed var(--primary);
+    padding: 0.5rem;
+    border-radius: 6px;
+    position: relative;
   }
   
-  /* The "Active" Lime Card from the image */
-  .airy-card.active {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border: none;
-    box-shadow: 
-      0 25px 50px -12px hsla(var(--primary), 0.4),
-      0 4px 12px -2px hsla(var(--primary), 0.3);
+  .brutal-card-inner {
+    background: var(--card);
+    border: 4px solid var(--border);
+    padding: 1.5rem;
+    position: relative;
+    box-shadow: 8px 8px 0px 0px var(--border);
+  }
+
+  /* Bottom decoration stripe in the mockup */
+  .stripe-decorator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 12px;
+    background: linear-gradient(90deg, 
+      var(--primary) 25%, 
+      var(--accent-yellow) 25%, var(--accent-yellow) 50%,
+      var(--accent) 50%, var(--accent) 75%,
+      var(--primary) 75%
+    );
   }
 
   /* HIERARCHY TIER 2: Inner Elements */
   .pill-badge {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(8px);
-    border-radius: 9999px;
-    padding: 0.5rem 1rem;
-    font-size: 0.75rem;
-    font-weight: 700;
+    border: 3px solid var(--border);
+    padding: 0.25rem 0.5rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    font-size: 0.9rem;
+    box-shadow: 2px 2px 0px 0px var(--border);
   }
   
-  .airy-card.active .pill-badge {
-    background: rgba(255, 255, 255, 0.9);
+  .pill-badge.pink {
+    background: var(--accent);
+    color: white;
+  }
+  
+  .pill-badge.yellow {
+    background: var(--accent-yellow);
+    color: black;
+  }
+  
+  .pill-badge.blue {
+    background: var(--primary);
+    color: white;
+  }
+  
+  .pill-badge.white {
+    background: white;
     color: black;
   }
 
   /* HIERARCHY TIER 3: Action Buttons */
-  .action-circle {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
-    cursor: pointer;
-  }
-  
-  .action-circle.dark {
-    background: #000;
-    color: #fff;
-  }
-  
-  .action-circle.light {
-    background: #fff;
-    color: #000;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  }
-
-  .action-circle:active {
-    transform: scale(0.9);
-  }
-  
-  /* Status Indicator Chips (Numbers/Scores) */
-  .status-chip {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px; /* Pill shape or circle */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .brutal-button {
+    background: var(--primary);
+    color: white;
+    border: 4px solid var(--border);
+    padding: 1.25rem 2rem;
+    font-size: 2rem;
     font-weight: 800;
-    font-size: 0.85rem;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 6px 6px 0px 0px var(--border);
+    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+    text-transform: uppercase;
+    width: 100%;
   }
 
-  .status-chip.dark {
-    background: #000;
-    color: #fff;
+  .brutal-button:active {
+    transform: translate(4px, 4px);
+    box-shadow: 2px 2px 0px 0px var(--border);
+  }
+
+  .brutal-button.yellow {
+    background: var(--accent-yellow);
+    color: black;
+  }
+
+  .brutal-button.white {
+    background: white;
+    color: black;
+  }
+
+  /* Icons */
+  .brutal-icon-box {
+    border: 3px solid var(--border);
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 3px 3px 0px 0px var(--border);
+  }
+
+  .brutal-icon-box.yellow {
+    background: var(--accent-yellow);
+    color: black;
   }
   
-  .status-chip.lime {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+  .brutal-icon-box.pink {
+    background: var(--accent);
+    color: white;
   }
 
-  .premium-button-3d:active {
-    transform: translateY(4px);
-    box-shadow:
-      0 4px 0 0 hsl(172 45% 30%),
-      0 10px 20px -10px hsla(172, 45%, 40%, 0.3);
+  .brutal-icon-box.white {
+    background: white;
+    color: black;
   }
 
-  /* Glass Orbs for soft interactive icons */
-  .glass-orb {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 9999px;
-    background: hsla(var(--card), 0.9);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsla(var(--foreground), 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.06),
-      0 12px 24px -6px rgba(0, 0, 0, 0.04);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    color: hsl(var(--primary));
-  }
-
-  .glass-icon-sq {
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 1rem;
-    background: hsla(var(--card), 0.9);
-    backdrop-filter: blur(12px);
-    border: 1px solid hsla(var(--foreground), 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.06),
-      0 12px 24px -6px rgba(0, 0, 0, 0.04);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    color: hsl(var(--primary));
-  }
-
-  /* Navigation Dock - Sophisticated Sage Glass */
+  /* Navigation Dock */
   .nav-dock {
     position: fixed;
-    bottom: 2.25rem;
-    left: 1.5rem;
-    right: 1.5rem;
+    bottom: 0;
+    left: 0;
+    right: 0;
     height: 5rem;
-    background: hsla(var(--card), 0.75);
-    backdrop-filter: blur(60px) saturate(200%);
-    border: 1px solid hsla(var(--foreground), 0.06);
-    box-shadow: 0 32px 72px -12px rgba(0, 0, 0, 0.12);
-    border-radius: 2.5rem;
+    background: white;
+    border-top: 4px solid var(--border);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -227,33 +213,12 @@
   }
 
   .main-content {
-    padding-bottom: 11rem;
-    padding-top: 6rem;
+    padding-bottom: 7rem;
+    padding-top: 1.5rem;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
     max-width: 32rem;
     margin-left: auto;
     margin-right: auto;
   }
-}
-
-/* 3D Voice Trigger Orb */
-.voice-button-liquid {
-  position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 1.25rem;
-  background: hsla(var(--card), 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid hsla(var(--foreground), 0.08);
-  box-shadow:
-    0 12px 24px -4px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: hsl(var(--primary));
-  z-index: 100;
 }

@@ -2,21 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Calendar, Users, Wallet, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, Settings } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { motion } from 'framer-motion'
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
 const navItems = [
-    { label: 'Home', href: '/', icon: LayoutDashboard },
-    { label: 'Schedule', href: '/schedule', icon: Calendar },
-    { label: 'Clients', href: '/clients', icon: Users },
-    { label: 'Finances', href: '/finances', icon: Wallet },
-    { label: 'Settings', href: '/settings', icon: Settings },
+    { label: 'DASH', href: '/', icon: LayoutDashboard },
+    { label: 'PLAN', href: '/schedule', icon: Calendar },
+    { label: 'CLIENT', href: '/clients', icon: Users },
+    { label: 'TOOLS', href: '/settings', icon: Settings },
 ]
 
 export function MobileNav() {
@@ -32,33 +30,24 @@ export function MobileNav() {
                     <Link
                         key={item.href}
                         href={item.href}
-                        className="flex items-center gap-2 relative px-3 py-2 rounded-2xl transition-all"
-                    >
-                        {isActive && (
-                            <motion.div
-                                layoutId="active-tab"
-                                className="absolute inset-0 bg-[hsl(var(--primary)/0.15)] border border-[hsl(var(--primary)/0.2)] rounded-2xl -z-10"
-                                transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-                            />
+                        className={cn(
+                            "flex flex-col items-center justify-center p-2 pt-3 transition-all",
+                            isActive ? "text-[var(--primary)]" : "text-black"
                         )}
-                        <motion.div
-                            whileTap={{ scale: 0.85 }}
+                    >
+                        <div className={cn(
+                            "mb-1 pb-1 px-3",
+                            isActive ? "bg-[#e5ecff] border-2 border-transparent" : "border-2 border-transparent" // Light blue bg for active
+                        )}>
+                            <Icon size={24} strokeWidth={isActive ? 3 : 2} />
+                        </div>
+                        <span
                             className={cn(
-                                "transition-colors duration-300",
-                                isActive ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--muted-foreground))]"
+                                "text-xs font-black uppercase tracking-wider",
                             )}
                         >
-                            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                        </motion.div>
-                        {isActive && (
-                            <motion.span
-                                initial={{ opacity: 0, width: 0 }}
-                                animate={{ opacity: 1, width: 'auto' }}
-                                className="text-[10px] font-black uppercase tracking-widest text-[hsl(var(--foreground))]"
-                            >
-                                {item.label}
-                            </motion.span>
-                        )}
+                            {item.label}
+                        </span>
                     </Link>
                 )
             })}
